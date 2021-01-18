@@ -8,7 +8,7 @@ extern uint16_t usSRegHoldBuf[];
 float maxvoltage, minvoltage, maxcurrent, mincurrent;
 float deltaVoltage, deltaCurrent;
 float currentADC, voltageADC, currentADCP, voltageADCP; 
-float procentageOfErrors;
+
 bool checkRange(float maxx, float minx, float xADC)
 {
 	return (maxx > xADC) && (minx < xADC);
@@ -42,11 +42,9 @@ void check(void)
 }
 
 void check_thermaltests(void) 
-{
-	procentageOfErrors = usSRegHoldBuf[4];
-	
-	deltaVoltage = voltageADC * procentageOfErrors * 0.01;
-	deltaCurrent = currentADC * procentageOfErrors * 0.01;
+{	
+	deltaVoltage = voltageADC * 0.05;
+	deltaCurrent = currentADC * 0.05;
 	
 	maxvoltage = voltageADC + deltaVoltage;
 	minvoltage = voltageADC - deltaVoltage;

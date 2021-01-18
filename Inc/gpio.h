@@ -28,10 +28,6 @@
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#define ISTD GPIO_PIN_9	 
-#define	ISTZ GPIO_PIN_8
-	 
-#define CNV	GPIO_PIN_12
 	 
 /* USER CODE END Includes */
 

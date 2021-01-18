@@ -23,10 +23,10 @@ extern "C" {
 
 	/* USER CODE END Private defines */
 
-	void staticsVD(void);
-	void staticsVZ(void);
-	void dynamic_VD(void);
-	void dynamic_VZ(void);
+	void measuringVD(void);
+	void measuringVZ(void);
+	void configurationADC(void);
+
 
 	/* USER CODE BEGIN Prototypes */
 

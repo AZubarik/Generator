@@ -31,8 +31,7 @@
 #include "user_mb_app.h"
 
 #include "measuring_vd_vz.h"
-#include "check.h"
-
+#include "mode.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,15 +43,11 @@
 /* USER CODE BEGIN PD */
 extern uint16_t usSRegInBuf[];
 extern uint16_t usSRegHoldBuf[];
-
-//uint8_t spiData2[10];
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-int i30min, i30max, i30dmin, i30dmax;
-int mode = 0; 
-int mas[2];
+int mode, start = 0; 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -80,7 +75,6 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-usSRegInBuf[8] = 100;
 
   /* USER CODE END 1 */
 
@@ -106,14 +100,19 @@ usSRegInBuf[8] = 100;
   MX_TIM1_Init();
   MX_TIM4_Init();
   MX_USART3_UART_Init();
-  MX_TIM3_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(GPIOA, ISTD, GPIO_PIN_RESET);            // Off ISTD
-  HAL_GPIO_WritePin(GPIOA, ISTZ, GPIO_PIN_RESET);            // Off ISTZ
+  
+	ISTD_ON;	ISTZ_ON;  
 	
-  eMBInit( MB_RTU, 1, &huart3, 115200, &htim4 );
-  eMBEnable();	
+	HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
+	HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_3);
+	
+	//configurationADC();
+		
+	eMBInit(MB_RTU, 2, &huart3, 115200, &htim4);
+	eMBEnable();	
 	
   /* USER CODE END 2 */
 
@@ -121,93 +120,62 @@ usSRegInBuf[8] = 100;
   /* USER CODE BEGIN WHILE */
 	
   while (1)
-  { 
+  {
 	  mode = usSRegHoldBuf[0];
+	  start = usSRegHoldBuf[1];
 	  
 	  switch (mode)
 	  {
-	  case 1: 
-		  {
-			  HAL_GPIO_WritePin(GPIOA, ISTD, GPIO_PIN_SET);                       //  On ISTD
-//			  HAL_Delay(20000);
-			  staticsVD();
-			  check();
-			  HAL_GPIO_WritePin(GPIOA, ISTD, GPIO_PIN_RESET);                     //  Off ISTD
-			  break;
-		  }	  
-	  
-	  case 2:
-		  {
-			  HAL_GPIO_WritePin(GPIOA, ISTZ, GPIO_PIN_SET);                       //  On ISTZ
-//			  HAL_Delay(20000);
-			  staticsVZ();
-//			  check();
-			  HAL_GPIO_WritePin(GPIOA, ISTZ, GPIO_PIN_RESET);                     //  Off ISTZ
-			  break;
-		  }	 
-	  
-	  case 3:
-		  {
-			  HAL_GPIO_WritePin(GPIOA, ISTD, GPIO_PIN_SET);                        //  On ISTD
-			  staticsVD();
-//			  check_thermaltests();
-			  HAL_GPIO_WritePin(GPIOA, ISTD, GPIO_PIN_RESET);                      //  Off ISTD
-			  break;
-		  }
-	  
-	  case 4:
-		  {
-			  HAL_GPIO_WritePin(GPIOA, ISTZ, GPIO_PIN_SET);                        //  On ISTZ
-			  staticsVZ();
-//			  check_thermaltests();
-			  HAL_GPIO_WritePin(GPIOA, ISTZ, GPIO_PIN_RESET);                      //  Off ISTZ
-			  break;
-		  }
-	  
-	  case 5:
-		  {
-			  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-			  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-			  i30max = 0;
-			  i30min = 0;
-	//		  HAL_Delay(10000);
-			  HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_3);
-			  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2); 		 
-	//		  dynamic_VD();
-	//		  check_thermaltests();
-		      usSRegHoldBuf[0] = 0;
-			  break;
-		  }
-	  
-	  case 6:
-		  {
-			  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-			  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-	//		  HAL_Delay(10000);
-			  i30dmin = 0;
-			  i30dmax = 0;
-			  HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
-			  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
-	//		  dynamic_VZ();
-	//		  check_thermaltests();
-			  	
-			  usSRegHoldBuf[0] = 0;
-			  break;
-		  }
-		  		  
+		  case 0:
+		  waiting_mode();
+		  break;
+		  
+		  case 1:
+		  
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, OFF); HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, ON);  //Светодиод катода диода
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, OFF); HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, ON);  //Светодиод режима диода
+			  
+			  if (start == 1)
+			  {
+				  modeVD();
+			  }
+		  
+			  if (start == 2)
+			  {
+				  modeVD_pulse();
+			  }
+		  
+		  break;
+		  
+		  case 2:
+		  
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, OFF); HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, ON);   //Светодиод катода VZ
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, OFF); HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, ON);		//Светодиод режима VZ
+			  
+			  if (start == 3)
+			  {
+				  modeVZ();
+			  }
+			  if (start == 4)
+			  {
+				  modeVZ_pulse();
+			  } 
+		  
+		  break;
+		  
+		  case 5:
+		  diagnostic();
+		  
+		  usSRegHoldBuf[0] = 0;
+		  break;					  
 	  }
-	  HAL_Delay(200);
-	  // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
-	  
-	  HAL_NVIC_DisableIRQ(EXTI0_IRQn);
-	  HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-	  HAL_NVIC_DisableIRQ(EXTI2_IRQn);
-	  HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+	  	  
+	  HAL_Delay(20);
 	  
 	  eMBPoll();
-    /* USER CODE END WHILE */
+	/* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+	/* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -233,12 +201,12 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL3;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    Error_Handler();
+	Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+							  |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -246,7 +214,7 @@ void SystemClock_Config(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
-    Error_Handler();
+	Error_Handler();
   }
 }
 

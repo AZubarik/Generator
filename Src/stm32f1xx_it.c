@@ -23,11 +23,11 @@
 #include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "gpio.h"
 extern uint16_t usSRegInBuf[];
 extern uint16_t usSRegHoldBuf[];
 
-int i30min, i30max, i30dmin, i30dmax;
-int nnn;
+int id30min, id30max, iz30min, iz30max;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -206,67 +206,6 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line0 interrupt.
-  */
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-	i30min = i30min + 1;
-	usSRegInBuf[5] = i30min;
-	
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line1 interrupt.
-  */
-void EXTI1_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI1_IRQn 0 */
-	i30dmin = i30dmin + 1;
-	usSRegInBuf[5] = i30dmin;
-  /* USER CODE END EXTI1_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
-  /* USER CODE BEGIN EXTI1_IRQn 1 */
-
-  /* USER CODE END EXTI1_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line2 interrupt.
-  */
-void EXTI2_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI2_IRQn 0 */
-	i30dmax = i30dmax + 1;
-	usSRegInBuf[6] = i30dmax;
-  /* USER CODE END EXTI2_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
-  /* USER CODE BEGIN EXTI2_IRQn 1 */
-
-  /* USER CODE END EXTI2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line3 interrupt.
-  */
-void EXTI3_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI3_IRQn 0 */
-	i30max = i30max + 1;
-	usSRegInBuf[6] = i30max;
-  /* USER CODE END EXTI3_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
-  /* USER CODE BEGIN EXTI3_IRQn 1 */
-
-  /* USER CODE END EXTI3_IRQn 1 */
-}
-
-/**
   * @brief This function handles EXTI line[9:5] interrupts.
   */
 void EXTI9_5_IRQHandler(void)
@@ -286,39 +225,20 @@ void EXTI9_5_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-	/*switch (nnn)
+	if (ID30MIN == GPIO_PIN_SET) 
 	{
-	case 1:
-		{
-			if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET) 
-			{
-				i30min = i30min + 1;
-				usSRegInBuf[4] = i30min;
-			}
+		id30min = id30min + 1;
+		usSRegInBuf[8] = id30min;
+	}
 	
-			if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_3) == GPIO_PIN_SET) 
-			{
-				i30max = i30max + 1;
-				usSRegInBuf[5] = i30max;
-			}
-			break;
-		}
-	case 2:
-		{
-			if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) == GPIO_PIN_SET) 
-			{
-				i30dmin = i30dmin + 1;
-				usSRegInBuf[6] = i30dmin;
-			}
+	if (ID30MAX == GPIO_PIN_SET) 
+	{
+		id30max = id30max + 1;
+		usSRegInBuf[9] = id30max;
+	}
+	usSRegInBuf[8] = id30min;
+	usSRegInBuf[9] = id30max;
 	
-			if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_2) == GPIO_PIN_SET) 
-			{
-				i30dmax = i30dmax + 1;
-				usSRegInBuf[7] = i30dmax;
-			}
-			break;
-		}
-	}*/
   /* USER CODE END TIM2_IRQn 0 */
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
@@ -332,6 +252,19 @@ void TIM2_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
+	if (IZ30MIN == GPIO_PIN_SET) 
+	{
+		iz30min = iz30min + 1;
+		usSRegInBuf[10] = iz30min;
+	}
+	
+	if (IZ30MAX == GPIO_PIN_SET) 
+	{
+		iz30max = iz30max + 1;
+		usSRegInBuf[11] = iz30max;
+	}
+	usSRegInBuf[10] = iz30min;
+	usSRegInBuf[11] = iz30max;
 
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);

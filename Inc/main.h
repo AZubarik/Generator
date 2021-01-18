@@ -32,7 +32,41 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+	
+#define ON                  GPIO_PIN_SET
+#define OFF					GPIO_PIN_RESET
+/* SPI2 ---------------------------------------------------------------------*/	
 
+#define CNV_ON				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, ON)
+#define CNV_OFF				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, OFF)
+	 
+/* PWM ---------------------------------------------------------------------*/
+	 
+#define PWMN_Stop			HAL_TIMEx_PWMN_Stop
+#define PWMN_Start			HAL_TIMEx_PWMN_Start
+	 
+/* TIM ---------------------------------------------------------------------*/
+	 
+#define	TIM_Stop_IT			HAL_TIM_Base_Stop_IT
+#define TIM_Start_IT		HAL_TIM_Base_Start_IT
+
+/* LED_VD, LED_VZ ----------------------------------------------------------*/
+#define LED_VD				GPIO_PIN_7
+#define LED_VZ				GPIO_PIN_12
+	 
+#define LED_VD1				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8)
+/* -------------------------------------------------------------------------*/	
+#define IZ30MIN				HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)	 
+#define	IZ30MAX				HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_3)
+#define ID30MIN				HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) 
+#define	ID30MAX				HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_2)
+	 
+#define ISTD_ON				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, ON)	
+#define ISTD_OFF			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, OFF)
+	 
+#define	ISTZ_ON				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, ON) 
+#define	ISTZ_OFF			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, OFF) 
+	
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

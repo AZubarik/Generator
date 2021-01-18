@@ -1,116 +1,70 @@
-//* Includes ------------------------------------------------------------------*/
 #include "measuring_vd_vz.h"
-#include "converting.h"
-//* Includes ------------------------------------------------------------------*/
 
-uint16_t AD7682_IN0 = 0x3C79 ;         //0x3C79
-uint16_t AD7682_IN1 = 0x3CF9;      // 0x3CF9
-uint16_t AD7682_IN2 = 0x3D79  ;       //  0x3D79
-uint16_t AD7682_IN3 = 0x3DF9;             //0x3DF9     
+uint16_t		CFG = 0x39FF << 2,
+         AD7682_IN0 = 0x3C49 << 2,         // 0x3C49   // 0x3849
+         AD7682_IN1 = 0x3CC9 << 2,         // 0x3CC9   // 0x38C9
+         AD7682_IN2 = 0x3D49 << 2,         // 0x3D49   // 0x3949
+         AD7682_IN3 = 0x3DC9 << 2;         // 0x3DC9   // 0x39C9   
+                    
+float deltaADC = 0.0000625,
+      Resistor = 0.25;
 
+int   UDOUT = 2,	IDOUT = 2,
+      UZOUT = 2,	IZOUT = 2;
 uint16_t out;
-
-float currentADC, voltageADC, currentADCP, voltageADCP; 
+uint16_t* tmp;
+float currentADC_vd, voltageADC_vd, currentADC_vz, voltageADC_vz;
 extern uint16_t usSRegInBuf[];
-extern uint16_t usSRegHoldBuf[];
 
-void setConfigADC(uint16_t value)
-{
-	HAL_GPIO_WritePin(GPIOB, CNV, GPIO_PIN_SET);
-	HAL_Delay(20);
-	HAL_GPIO_WritePin(GPIOB, CNV, GPIO_PIN_RESET);
-	
-	uint16_t registerADC = value;
-	uint8_t* pRegisterADC = (uint8_t*)(&registerADC);    //(uint8_t*)&AD7682_IN3
-	
-	HAL_GPIO_WritePin(GPIOB, CNV, GPIO_PIN_SET);
-	
-	//HAL_SPI_Transmit(&hspi2, (uint8_t*)&AD7682_IN2, 1, 5);
-	
-	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*)& AD7682_IN2, (uint8_t*)&out, 16,5);
-	 usSRegInBuf[0] = out;
+int setConfigADC(uint16_t value) {
+    
+    for (int i = 0; i <= 15; i++) {
+	    CNV_OFF;
+	    HAL_Delay(2);
+        HAL_SPI_TransmitReceive(&hspi2, (uint8_t*)&value, (uint8_t*)&out, 1, 10);
+        HAL_Delay(2);	
+        CNV_ON;
+    }
+    return out;
 }
 
-int getMeasurementADC()
-{
-	uint16_t out;
-	int resultBin;
-	
-//	HAL_SPI_Receive(&hspi2, (uint8_t*)&out, 2, 5); 	
-	resultBin = out;
-	
-	HAL_GPIO_WritePin(GPIOB, CNV, GPIO_PIN_SET);
-	return binaryToDecimal(resultBin);
-}
-/*----------------------------------------------------------------------------*/
-
-void staticsVD(void)
-	
-{   
-	HAL_GPIO_WritePin(GPIOB, CNV, GPIO_PIN_SET);
-	HAL_Delay(20);
-	HAL_GPIO_WritePin(GPIOB, CNV, GPIO_PIN_RESET);
-	HAL_SPI_TransmitReceive(&hspi2, (uint8_t*)& AD7682_IN3, (uint8_t*)&out,4, 5);
-	usSRegInBuf[0] = out;
-	
-	HAL_GPIO_WritePin(GPIOB, CNV, GPIO_PIN_SET);
-	
-//	setConfigADC(AD7682_IN3);
-//	voltageADC = getMeasurementADC(); // * 0.0000625;
- //   usSRegInBuf[0] = voltageADC;
-		
-//	setConfigADC(AD7682_IN2);                      
-//	usSRegInBuf[1] = getMeasurementADC();  
-//	currentADC =  getMeasurementADC(); // * 0.0000625 * 0.005;
-//	usSRegInBuf[1] = currentADC;
-//	
-	usSRegHoldBuf[0] = 0;
+void dataTransferADC(int registr, float out) {
+	tmp = (uint16_t*) &out;
+    usSRegInBuf[registr] = *tmp;
+    usSRegInBuf[registr + 1] = *(tmp + 1);
 }
 
-void staticsVZ(void)
-{
-	setConfigADC(AD7682_IN1);
-	usSRegInBuf[2] = getMeasurementADC();
-     
-	HAL_Delay(20);
-
-	setConfigADC(AD7682_IN0);                      
-	usSRegInBuf[3] = getMeasurementADC(); 
-  
-	usSRegHoldBuf[0] = 0;
+void measuringVD(void) { 
+    setConfigADC(AD7682_IN3);
+    voltageADC_vd = out * deltaADC  * UDOUT ;
+    dataTransferADC(0, voltageADC_vd);
+    
+    setConfigADC(AD7682_IN2);  
+    currentADC_vd = out * deltaADC * IDOUT; 
+    dataTransferADC(2, currentADC_vd);
 }
 
-void dynamic_VD(void)
-{
-	setConfigADC(AD7682_IN3);
-	voltageADCP = getMeasurementADC();  // * 0.0000625;
-    usSRegInBuf[0] = voltageADCP;
-	
-	HAL_Delay(20);
-	
-	setConfigADC(AD7682_IN2);                      
-	usSRegInBuf[1] = getMeasurementADC();  
-	currentADCP =  getMeasurementADC();  // * 0.0000625 * 0.005;
-	usSRegInBuf[1] = currentADCP;
-	
-	usSRegHoldBuf[0] = 0;
+void measuringVZ(void) {
+    setConfigADC(AD7682_IN1);
+    voltageADC_vz = out * deltaADC * UZOUT;
+    dataTransferADC(4, voltageADC_vz);
+
+    setConfigADC(AD7682_IN0); 
+    currentADC_vz = out * deltaADC * IZOUT * Resistor;  
+    dataTransferADC(6, currentADC_vz);
 }
 
-void dynamic_VZ(void)
-{
-	setConfigADC(AD7682_IN1);
-	usSRegInBuf[2] = getMeasurementADC();
-     
-	HAL_Delay(20);
-
-	setConfigADC(AD7682_IN0);                      
-	usSRegInBuf[3] = getMeasurementADC(); 
-  
-	usSRegHoldBuf[0] = 0;
+void configurationADC(void) {
+	
+    for (int i = 0; i <= 3; i++) {
+        CNV_ON;
+        HAL_Delay(20);
+        
+        CNV_OFF;
+        HAL_Delay(2);
+        HAL_SPI_TransmitReceive(&hspi2, (uint8_t*)&CFG, (uint8_t*)&out, 1, 10);
+        HAL_Delay(2);
+        CNV_ON;
+    }
 }
 
-/*----------------------------------------------------------------------------*/
-//	SPI2->DR = 0x3DF9;
-//	while (!(SPI2->SR & SPI_FLAG_RXNE)) ;
-//	reg16bit = (int16_t)(SPI2->DR);
-//	usSRegInBuf[0] = reg16bit;
