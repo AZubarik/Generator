@@ -225,7 +225,8 @@ void EXTI9_5_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-	if (ID30MIN == GPIO_PIN_SET) 
+	if (ID30MIN == GPIO_PIN_SET)      //inversion reset
+
 	{
 		id30min = id30min + 1;
 		usSRegInBuf[8] = id30min;
@@ -252,7 +253,7 @@ void TIM2_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-	if (IZ30MIN == GPIO_PIN_SET) 
+	if (IZ30MIN == GPIO_PIN_RESET) 
 	{
 		iz30min = iz30min + 1;
 		usSRegInBuf[10] = iz30min;
